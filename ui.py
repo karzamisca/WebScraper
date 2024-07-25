@@ -147,7 +147,7 @@ def setup_ui():
     lbl_download_dir.pack()
 
     # Options
-    tk.Checkbutton(root, text="Headless Mode", variable=tk.BooleanVar(value=headless_mode), command=toggle_headless_mode).pack()
+    tk.Checkbutton(root, text="Bypass Webpage Proctection Mode (Warning: Significantly Slower Performance)", variable=tk.BooleanVar(value=headless_mode), command=toggle_headless_mode).pack()
     tk.Checkbutton(root, text="Skip PDF", variable=tk.BooleanVar(value=skip_pdf), command=toggle_skip_pdf).pack()
     tk.Checkbutton(root, text="Skip Translation", variable=tk.BooleanVar(value=skip_translation), command=toggle_skip_translation).pack()
     tk.Checkbutton(root, text="Skip Download", variable=tk.BooleanVar(value=skip_download), command=toggle_skip_download).pack()
