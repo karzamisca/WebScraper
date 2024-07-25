@@ -1,39 +1,30 @@
-import html2text
-import markdown
-from googletrans import Translator
+from markdown2 import markdown
+from html2text import html2text
 
-def translate_text_file(input_path, output_path, dest_lang='en'):
-    """Translate the content of a text file to the specified language and save to a new file."""
-    translator = Translator()
+def convert_html_to_markdown(html_file, md_file):
+    """Convert HTML file to Markdown file."""
+    with open(html_file, 'r', encoding='utf-8') as file:
+        html_content = file.read()
+    markdown_content = markdown(html_content)
+    with open(md_file, 'w', encoding='utf-8') as file:
+        file.write(markdown_content)
+
+def convert_markdown_to_txt(md_file, txt_file):
+    """Convert Markdown file to plain text file."""
+    with open(md_file, 'r', encoding='utf-8') as file:
+        markdown_content = file.read()
+    text_content = markdown(markdown_content)
+    with open(txt_file, 'w', encoding='utf-8') as file:
+        file.write(text_content)
+
+def convert_html_to_text(html_file_path, txt_file_path):
+    """Convert HTML file to a plain text file."""
+    with open(html_file_path, 'r', encoding='utf-8') as html_file:
+        html_content = html_file.read()
     
-    # Read the content of the input text file
-    with open(input_path, 'r', encoding='utf-8') as file:
-        text = file.read()
+    text_content = html2text(html_content)
     
-    # Translate the content
-    translated = translator.translate(text, dest=dest_lang).text
-    
-    # Save the translated content to a new file
-    with open(output_path, 'w', encoding='utf-8') as file:
-        file.write(translated)
+    with open(txt_file_path, 'w', encoding='utf-8') as txt_file:
+        txt_file.write(text_content)
 
-    print(f"Translated text saved to: {output_path}")
-
-def convert_html_to_markdown(source_html, output_file):
-    """Convert HTML file to Markdown file using html2text."""
-    html_to_markdown = html2text.HTML2Text()
-    html_to_markdown.ignore_links = False
-    with open(source_html, 'r', encoding='utf-8') as file:
-        html_content = file.read()  # Read HTML content
-    markdown_content = html_to_markdown.handle(html_content)  # Convert HTML to Markdown
-    with open(output_file, 'w', encoding='utf-8') as file:
-        file.write(markdown_content)  # Save Markdown content to file
-
-def convert_markdown_to_txt(source_md, output_file):
-    """Convert Markdown file to plain text file using markdown library."""
-    with open(source_md, 'r', encoding='utf-8') as file:
-        md_content = file.read()  # Read Markdown content
-    html_content = markdown.markdown(md_content)  # Convert Markdown to HTML
-    text_content = html2text.html2text(html_content)  # Convert HTML to plain text
-    with open(output_file, 'w', encoding='utf-8') as file:
-        file.write(text_content)  # Save plain text content to file
+    print(f"Converted HTML to Text successfully as '{txt_file_path}'")

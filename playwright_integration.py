@@ -2,11 +2,11 @@ import os
 from urllib.parse import urljoin, urlparse
 from playwright.async_api import async_playwright, Page
 
-from conversion import convert_html_to_markdown, convert_markdown_to_txt
-from file_handling import download_file
+from conversion import convert_html_to_text
+from file_handling import download_file, translate_text_file
 
-async def process_urls(urls, html_path, pdf_path, md_path, txt_path, download_folder, headless_mode, skip_pdf, skip_md, skip_download):
-    """Process each URL to save HTML, convert to PDF and Markdown, extract links, and download files."""
+async def process_urls(urls, html_path, pdf_path, txt_path, translated_txt_path, download_folder, headless_mode, skip_pdf, skip_text, skip_translation, skip_download, target_language):
+    """Process each URL to save HTML, convert to PDF, extract links, and download files."""
     async with async_playwright() as p:
         browser = await p.chromium.launch(
             headless=headless_mode,
@@ -25,8 +25,8 @@ async def process_urls(urls, html_path, pdf_path, md_path, txt_path, download_fo
                 base_filename = url.replace("https://", "").replace("http://", "").replace("/", "_")
                 html_file_path = os.path.join(html_path, f'{base_filename}.html')
                 pdf_file_path = os.path.join(pdf_path, f'{base_filename}.pdf') if not skip_pdf else None
-                md_file_path = os.path.join(md_path, f'{base_filename}.md') if not skip_md else None
-                txt_file_path = os.path.join(txt_path, f'{base_filename}.txt') if not skip_md else None
+                txt_file_path = os.path.join(txt_path, f'{base_filename}.txt') if not skip_text else None
+                translated_txt_file_path = os.path.join(translated_txt_path, f'{base_filename}_translated.txt') if not skip_translation and translated_txt_path else None
 
                 # Always process HTML
                 with open(html_file_path, 'w', encoding='utf-8') as file:
@@ -36,14 +36,14 @@ async def process_urls(urls, html_path, pdf_path, md_path, txt_path, download_fo
                     await convert_html_to_pdf(page, html_content, pdf_file_path)  # Convert HTML to PDF
                     print(f"HTML converted to PDF successfully as '{pdf_file_path}'")
 
-                if not skip_md and md_file_path:
-                    convert_html_to_markdown(html_file_path, md_file_path)  # Convert HTML to Markdown
-                    print(f"HTML converted to Markdown successfully as '{md_file_path}'")
+                if not skip_text and txt_file_path:
+                    convert_html_to_text(html_file_path, txt_file_path)  # Convert HTML to Text
+                    print(f"HTML converted to Text successfully as '{txt_file_path}'")
 
-                if not skip_md and txt_file_path:
-                    # Always process Text if Markdown is processed
-                    convert_markdown_to_txt(md_file_path, txt_file_path)  # Convert Markdown to Text
-                    print(f"Markdown converted to Text successfully as '{txt_file_path}'")
+                if not skip_translation and translated_txt_file_path:
+                    if txt_file_path:
+                        await translate_text_file(txt_file_path, translated_txt_file_path, dest_lang=target_language)
+                        print(f"Text translated successfully as '{translated_txt_file_path}'")
 
                 if not skip_download:
                     external_links = await extract_links_from_html(page, url)

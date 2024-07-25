@@ -1,28 +1,43 @@
+from urllib.parse import urlparse
+from googletrans import Translator
 import os
+import re
 import requests
-from urllib.parse import urlparse, urljoin
 
 def read_urls_from_file(file_path):
-    """Read URLs from a text file, one per line."""
+    """Read URLs from a text file."""
     with open(file_path, 'r') as file:
-        return [line.strip() for line in file if line.strip()]
+        urls = [line.strip() for line in file if line.strip()]
+    return urls
 
 def download_file(url, download_folder):
-    """Download file from a URL if it's a supported type."""
+    """Download files from the given URL."""
     try:
         response = requests.get(url, stream=True, timeout=30)
         content_type = response.headers.get('content-type')
 
-        # Determine file extension based on content type
-        file_extension = determine_file_extension(content_type, url)
-        if not file_extension:
-            return False  # Unsupported file type
+        if 'application/pdf' in content_type:
+            file_extension = '.pdf'
+        elif 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' in content_type:
+            file_extension = '.docx'
+        elif 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' in content_type:
+            file_extension = '.xlsx'
+        elif 'application/epub+zip' in content_type:
+            file_extension = '.epub'
+        elif 'application/x-mobipocket-ebook' in content_type:
+            file_extension = '.mobi'
+        elif 'application/x-fictionbook+xml' in content_type:
+            file_extension = '.fb2'
+        elif 'application/x-tpf' in content_type:
+            file_extension = '.tpf'
+        else:
+            return False
 
         file_name = os.path.join(download_folder, os.path.basename(urlparse(url).path) + file_extension)
 
         with open(file_name, 'wb') as file:
             for chunk in response.iter_content(chunk_size=8192):
-                file.write(chunk)  # Write file content in chunks
+                file.write(chunk)
         
         return True
 
@@ -30,27 +45,30 @@ def download_file(url, download_folder):
         print(f"Failed to download file from {url}: {e}")
         return False
 
-def determine_file_extension(content_type, url):
-    """Determine the file extension based on content type."""
-    if 'application/pdf' in content_type:
-        return '.pdf'
-    elif 'application/epub+zip' in content_type:
-        return '.epub'
-    elif 'application/x-mobipocket-ebook' in content_type:
-        return '.mobi'
-    elif 'application/vnd.amazon.ebook' in content_type:
-        return '.azw'
-    elif 'application/vnd.ms-htmlhelp' in content_type:
-        return '.chm'
-    elif 'application/octet-stream' in content_type:
-        if url.endswith('.azw3'):
-            return '.azw3'
-        elif url.endswith('.kf8'):
-            return '.kf8'
-        elif url.endswith('.lit'):
-            return '.lit'
-        elif url.endswith('.prc'):
-            return '.prc'
-        elif url.endswith('.ibooks'):
-            return '.ibooks'
-    return None
+def clean_text(text):
+    # Remove HTML tags
+    text = re.sub(r'<[^>]+>', '', text)
+    # Remove special characters and URLs
+    text = re.sub(r'http\S+|www\.\S+|\[.*?\]|\(.*?\)|\{.*?\}|\!.*?\)', '', text)
+    # Remove extra whitespace
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
+
+async def translate_text_file(input_file_path, output_file_path, src_lang='auto', dest_lang='en'):
+    """Translate text file content using Google Translate."""
+    translator = Translator()
+
+    with open(input_file_path, 'r', encoding='utf-8') as input_file:
+        text = input_file.read()
+
+    # Clean the text
+    cleaned_text = clean_text(text)
+    
+    translated_text = translator.translate(cleaned_text, src=src_lang, dest=dest_lang).text
+    
+    with open(output_file_path, 'w', encoding='utf-8') as output_file:
+        output_file.write(translated_text)
+        
+    print(f"Translation complete. Output saved to {output_file}")
+
