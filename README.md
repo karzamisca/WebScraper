@@ -1,5 +1,7 @@
 ## Web Scraper with Playwright and Google Translate
 
+## WARNING: Use sites with https only
+
 ### Classes and Functions
 
 #### Functions
